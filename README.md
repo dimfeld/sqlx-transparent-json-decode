@@ -1,5 +1,14 @@
 # sqlx-transparent-json-decode
 
+<a href="https://docs.rs/sqlx-transparent-json-decode">
+    <img src="https://img.shields.io/badge/docs-latest-blue.svg?style=flat-square"
+      alt="docs.rs docs" />
+  </a>
+   <a href="https://crates.io/crates/sqlx">
+    <img src="https://img.shields.io/crates/d/sqlx-transparent-json-decode.svg?style=flat-square"
+      alt="Download" />
+  </a>
+
 This crate is meant for use with [sqlx](https://github.com/launchbadge/sqlx) and allows you to query JSON or JSONB fields from PostgreSQL without needing to wrap the types in a `sqlx::types::Json<>` wrapper type.
 
 ```rust
