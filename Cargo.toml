@@ -1,6 +1,6 @@
 [package]
 name = "sqlx-transparent-json-decode"
-version = "1.0.0"
+version = "2.0.0"
 edition = "2021"
 authors = ["Daniel Imfeld <dimfeld>"]
 license = "MIT OR Apache-2.0"
@@ -9,9 +9,17 @@ documentation = "https://docs.rs/sqlx-transparent-json-decode"
 repository = "https://github.com/dimfeld/sqlx-transparent-json-decode"
 
 [dependencies]
-sqlx = { version = "0.6.3", default-features = false, features = ["postgres"] }
+schemars = { version = "0.8.16", features = ["raw_value"], default-features = false, optional = true }
+serde = { version = "1.0.193", features = ["derive"], optional = true }
+serde_json = { version = "1.0.108", default-features = false, features = ["raw_value"] }
+sqlx = { version = "0.7.0", default-features = false, features = ["postgres"] }
+
+[features]
+default = []
+serde = ["dep:serde"]
+schemars = ["dep:schemars"]
 
 [package.metadata.docs.rs]
 # Need to enable at least one runtime feature to build with sqlx. Normally we just inherit it from
 # whatever the application using this crate is using, but for standalone builds we need to choose something.
-features = ["sqlx/runtime-tokio-native-tls"]
+features = ["sqlx/runtime-tokio", "sqlx/tls-native-tls"]

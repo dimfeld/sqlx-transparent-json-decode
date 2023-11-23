@@ -36,10 +36,20 @@ pub struct QueryResult {
 Normally, you would need to use `Json<SomeJsonField>` as the type for `params` in the above example. This crate allows you to use `SomeJsonField` directly.
 
 ```rust
-let result = sqlx::query_as::<_, QueryResult>(
+let result = sqlx::query_as!(
+    QueryResult,
     r##"SELECT id,
         name,
         params as "params: SomeJsonField"
       FROM some_table"##,
+).fetch_one(&pool).await?;
+```
+
+This crate also provides `BoxedRawValue`, a wrapper around `Box<serde_json::value::RawValue>` which can be decoded directly. This is
+otherwise difficult to do using sqlx's query macros.
+
+```rust
+let result = sqlx::query!(
+    r##"SELECT id, data as "data: BoxedRawValue" FROM table##"
 ).fetch_one(&pool).await?;
 ```
