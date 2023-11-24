@@ -14,12 +14,12 @@ serde = { version = "1.0.193", features = ["derive"], optional = true }
 serde_json = { version = "1.0.108", default-features = false, features = ["raw_value"] }
 sqlx = { version = "0.7.0", default-features = false, features = ["postgres"] }
 
+[dev-dependencies]
+serde = { version = "1.0.193", features = ["derive"] }
+serde_json = { version = "1.0.108", features = ["raw_value"] }
+sqlx = { version = "0.7.0", features = ["runtime-tokio", "tls-native-tls", "migrate", "postgres"] }
+
 [features]
 default = []
 serde = ["dep:serde"]
 schemars = ["dep:schemars"]
-
-[package.metadata.docs.rs]
-# Need to enable at least one runtime feature to build with sqlx. Normally we just inherit it from
-# whatever the application using this crate is using, but for standalone builds we need to choose something.
-features = ["sqlx/runtime-tokio", "sqlx/tls-native-tls"]

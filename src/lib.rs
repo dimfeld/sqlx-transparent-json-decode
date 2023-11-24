@@ -2,6 +2,9 @@
 //! or JSONB fields from PostgreSQL without needing to wrap the types in a `sqlx::types::Json<>` wrapper type.
 //!
 
+#[cfg(test)]
+mod test;
+
 #[doc(hidden)]
 /// This must be exported for the macro to work, but you won't need to use it.
 pub const JSON_OID: sqlx::postgres::types::Oid = sqlx::postgres::types::Oid(114);
@@ -11,7 +14,7 @@ pub const JSONB_OID: sqlx::postgres::types::Oid = sqlx::postgres::types::Oid(380
 
 /// Generate a Decode implementation for a type that can read it from a PostgreSQL JSON/JSONB field.
 ///
-/// ```rust
+/// ```ignore
 /// use serde::{Deserialize, Serialize};
 /// use sqlx_transparent_json_decode::sqlx_json_decode;
 ///
@@ -35,8 +38,9 @@ pub const JSONB_OID: sqlx::postgres::types::Oid = sqlx::postgres::types::Oid(380
 ///
 /// Normally, you would need to use `Json<SomeJsonField>` as the type for `params` in the above example. This macro allows you to use `SomeJsonField` directly.
 ///
-/// ```rust
-/// let result = sqlx::query_as::<_, QueryResult>(
+/// ```ignore
+/// let result = sqlx::query_as!(
+///     QueryResult,
 ///     r##"SELECT id,
 ///         name,
 ///         params as "params: SomeJsonField"
@@ -50,20 +54,7 @@ macro_rules! sqlx_json_decode {
             fn decode(
                 value: sqlx::postgres::PgValueRef<'r>,
             ) -> Result<Self, Box<dyn std::error::Error + 'static + Send + Sync>> {
-                use sqlx::ValueRef;
-                let is_jsonb = value.type_info().as_ref()
-                    == &sqlx::postgres::PgTypeInfo::with_oid($crate::JSONB_OID);
-                let mut buf = <&[u8] as sqlx::Decode<sqlx::Postgres>>::decode(value)?;
-
-                if is_jsonb {
-                    assert_eq!(
-                        buf[0], 1,
-                        "unsupported JSONB format version {}; please open an issue",
-                        buf[0]
-                    );
-
-                    buf = &buf[1..];
-                }
+                let buf = $crate::decode_json(value)?;
                 serde_json::from_slice(buf).map_err(Into::into)
             }
         }
@@ -118,23 +109,41 @@ impl<'r> sqlx::Decode<'r, sqlx::Postgres> for BoxedRawValue {
     fn decode(
         value: <sqlx::Postgres as sqlx::database::HasValueRef<'r>>::ValueRef,
     ) -> Result<Self, sqlx::error::BoxDynError> {
-        use sqlx::ValueRef;
-        let is_jsonb =
-            value.type_info().as_ref() == &sqlx::postgres::PgTypeInfo::with_oid(JSONB_OID);
-        let mut buf = <&[u8] as sqlx::Decode<sqlx::Postgres>>::decode(value)?;
-
-        if is_jsonb {
-            assert_eq!(
-                buf[0], 1,
-                "unsupported JSONB format version {}; please open an issue",
-                buf[0]
-            );
-
-            buf = &buf[1..];
-        }
-
+        let buf = decode_json(value)?;
         let string = std::str::from_utf8(buf)?;
         let raw_value = serde_json::value::RawValue::from_string(string.to_owned())?;
         Ok(BoxedRawValue(raw_value))
     }
+}
+
+impl sqlx::Type<sqlx::Postgres> for BoxedRawValue {
+    fn type_info() -> sqlx::postgres::PgTypeInfo {
+        sqlx::postgres::PgTypeInfo::with_oid(JSONB_OID)
+    }
+
+    fn compatible(ty: &sqlx::postgres::PgTypeInfo) -> bool {
+        *ty == sqlx::postgres::PgTypeInfo::with_oid(JSONB_OID)
+            || *ty == sqlx::postgres::PgTypeInfo::with_oid(JSON_OID)
+    }
+}
+
+/// Extract a byte slice from a Postgres JSON or JSONB value. You shouldn't need to use this directly.
+pub fn decode_json(
+    value: <sqlx::Postgres as sqlx::database::HasValueRef<'_>>::ValueRef,
+) -> Result<&'_ [u8], sqlx::error::BoxDynError> {
+    use sqlx::ValueRef;
+    let is_jsonb = value.type_info().as_ref() == &sqlx::postgres::PgTypeInfo::with_oid(JSONB_OID);
+    let mut buf = <&[u8] as sqlx::Decode<sqlx::Postgres>>::decode(value)?;
+
+    if is_jsonb {
+        assert_eq!(
+            buf[0], 1,
+            "unsupported JSONB format version {}; please open an issue",
+            buf[0]
+        );
+
+        buf = &buf[1..];
+    }
+
+    Ok(buf)
 }
