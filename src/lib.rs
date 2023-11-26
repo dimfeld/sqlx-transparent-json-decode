@@ -79,6 +79,10 @@ pub struct BoxedRawValue(Box<serde_json::value::RawValue>);
 
 #[cfg(feature = "schemars")]
 impl schemars::JsonSchema for BoxedRawValue {
+    fn is_referenceable() -> bool {
+        false
+    }
+
     fn schema_name() -> String {
         serde_json::value::RawValue::schema_name()
     }
