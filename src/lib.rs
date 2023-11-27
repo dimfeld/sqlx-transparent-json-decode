@@ -2,6 +2,8 @@
 //! or JSONB fields from PostgreSQL without needing to wrap the types in a `sqlx::types::Json<>` wrapper type.
 //!
 
+use sqlx::postgres::{PgHasArrayType, PgTypeInfo};
+
 #[cfg(test)]
 mod test;
 
@@ -117,6 +119,26 @@ impl<'r> sqlx::Decode<'r, sqlx::Postgres> for BoxedRawValue {
         let string = std::str::from_utf8(buf)?;
         let raw_value = serde_json::value::RawValue::from_string(string.to_owned())?;
         Ok(BoxedRawValue(raw_value))
+    }
+}
+
+impl PgHasArrayType for BoxedRawValue {
+    fn array_type_info() -> PgTypeInfo {
+        serde_json::value::RawValue::array_type_info()
+    }
+
+    fn array_compatible(ty: &PgTypeInfo) -> bool {
+        serde_json::value::RawValue::array_compatible(ty)
+    }
+}
+
+impl<'r> sqlx::Encode<'r, sqlx::Postgres> for BoxedRawValue {
+    fn encode_by_ref(
+        &self,
+        out: &mut <sqlx::Postgres as sqlx::database::HasArguments<'r>>::ArgumentBuffer,
+    ) -> sqlx::encode::IsNull {
+        let j = sqlx::types::Json(&self.0);
+        j.encode_by_ref(out)
     }
 }
 

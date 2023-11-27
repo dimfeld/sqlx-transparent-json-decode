@@ -58,7 +58,7 @@ mod sqlx_json_decode {
 
 mod boxed_raw_value {
     use crate::BoxedRawValue;
-    use serde_json::json;
+    use serde_json::{json, value::RawValue};
     use sqlx::FromRow;
 
     #[derive(Debug, FromRow)]
@@ -104,5 +104,31 @@ mod boxed_raw_value {
 
         let json_value: serde_json::Value = serde_json::from_str(value.data.get()).unwrap();
         assert_eq!(json_value, json!({"i": 123, "s": "abc"}));
+    }
+
+    #[sqlx::test(migrations = "./test_migrations")]
+    pub async fn insert(pool: sqlx::PgPool) {
+        let value = r##"{"i": 5, "s": "ppp"}"##;
+        let boxed =
+            BoxedRawValue(RawValue::from_string(value.to_string()).expect("Creating RawValue"));
+
+        sqlx::query!(
+            r##"INSERT INTO data (id, data) VALUES ($1, $2)"##,
+            500,
+            boxed as _
+        )
+        .execute(&pool)
+        .await
+        .unwrap();
+
+        // Then read it back to make sure it worked properly
+        let value =
+            sqlx::query!(r##"SELECT id, data as "data: BoxedRawValue" FROM data WHERE id = 500"##)
+                .fetch_one(&pool)
+                .await
+                .expect("fetching");
+
+        let json_value: serde_json::Value = serde_json::from_str(value.data.get()).unwrap();
+        assert_eq!(json_value, json!({"i": 5, "s": "ppp"}));
     }
 }
