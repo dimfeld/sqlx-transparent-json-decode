@@ -13,6 +13,9 @@ pub const JSON_OID: sqlx::postgres::types::Oid = sqlx::postgres::types::Oid(114)
 #[doc(hidden)]
 /// This must be exported for the macro to work, but you won't need to use it.
 pub const JSONB_OID: sqlx::postgres::types::Oid = sqlx::postgres::types::Oid(3802);
+#[doc(hidden)]
+/// This must be exported for the macro to work, but you won't need to use it.
+pub const JSONB_ARRAY_OID: sqlx::postgres::types::Oid = sqlx::postgres::types::Oid(3807);
 
 /// Generate a Decode implementation for a type that can read it from a PostgreSQL JSON/JSONB field.
 ///
@@ -71,6 +74,16 @@ macro_rules! sqlx_json_decode {
                     || *ty == sqlx::postgres::PgTypeInfo::with_oid($crate::JSON_OID)
             }
         }
+
+        impl sqlx::postgres::PgHasArrayType for $type {
+            fn array_type_info() -> sqlx::postgres::PgTypeInfo {
+                sqlx::postgres::PgTypeInfo::with_oid($crate::JSONB_ARRAY_OID)
+            }
+
+            fn array_compatible(ty: &sqlx::postgres::PgTypeInfo) -> bool {
+                <Self as sqlx::postgres::PgHasArrayType>::array_compatible(ty)
+            }
+        }
     };
 }
 
@@ -78,6 +91,14 @@ macro_rules! sqlx_json_decode {
 #[derive(Debug, Clone)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct BoxedRawValue(Box<serde_json::value::RawValue>);
+
+impl PartialEq for BoxedRawValue {
+    fn eq(&self, other: &Self) -> bool {
+        self.0.get() == other.0.get()
+    }
+}
+
+impl Eq for BoxedRawValue {}
 
 #[cfg(feature = "schemars")]
 impl schemars::JsonSchema for BoxedRawValue {
