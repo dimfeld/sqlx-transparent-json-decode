@@ -20,6 +20,7 @@ serde_json = { version = "1.0.108", features = ["raw_value"] }
 sqlx = { version = "0.7.0", features = ["runtime-tokio", "tls-native-tls", "migrate", "postgres"] }
 
 [features]
-default = []
+default = ["boxed_raw_value_eq"]
 serde = ["dep:serde"]
 schemars = ["dep:schemars"]
+boxed_raw_value_eq = []

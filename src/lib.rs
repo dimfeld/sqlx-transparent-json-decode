@@ -92,12 +92,14 @@ macro_rules! sqlx_json_decode {
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct BoxedRawValue(Box<serde_json::value::RawValue>);
 
+#[cfg(feature = "boxed_raw_value_eq")]
 impl PartialEq for BoxedRawValue {
     fn eq(&self, other: &Self) -> bool {
         self.0.get() == other.0.get()
     }
 }
 
+#[cfg(feature = "boxed_raw_value_eq")]
 impl Eq for BoxedRawValue {}
 
 #[cfg(feature = "schemars")]
