@@ -1,6 +1,6 @@
 [package]
 name = "sqlx-transparent-json-decode"
-version = "2.2.0"
+version = "2.2.1"
 edition = "2021"
 authors = ["Daniel Imfeld <dimfeld>"]
 license = "MIT OR Apache-2.0"
