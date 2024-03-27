@@ -12,6 +12,9 @@ mod test;
 pub const JSON_OID: sqlx::postgres::types::Oid = sqlx::postgres::types::Oid(114);
 #[doc(hidden)]
 /// This must be exported for the macro to work, but you won't need to use it.
+pub const JSON_ARRAY_OID: sqlx::postgres::types::Oid = sqlx::postgres::types::Oid(199);
+#[doc(hidden)]
+/// This must be exported for the macro to work, but you won't need to use it.
 pub const JSONB_OID: sqlx::postgres::types::Oid = sqlx::postgres::types::Oid(3802);
 #[doc(hidden)]
 /// This must be exported for the macro to work, but you won't need to use it.
@@ -81,7 +84,8 @@ macro_rules! sqlx_json_decode {
             }
 
             fn array_compatible(ty: &sqlx::postgres::PgTypeInfo) -> bool {
-                <Self as sqlx::postgres::PgHasArrayType>::array_compatible(ty)
+                *ty == sqlx::postgres::PgTypeInfo::with_oid($crate::JSONB_ARRAY_OID)
+                    || *ty == sqlx::postgres::PgTypeInfo::with_oid($crate::JSON_ARRAY_OID)
             }
         }
     };
