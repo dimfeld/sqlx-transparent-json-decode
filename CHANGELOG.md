@@ -1,3 +1,7 @@
+# 2.2.1
+
+- Fix derived `array_compatible` implementation
+
 # 2.2.0
 
 - Implement `PartialEq` and `Eq` on `BoxedRawValue`. This does not parse the JSON. Rather it does a simple check that the serialized bytes are identical, so it
