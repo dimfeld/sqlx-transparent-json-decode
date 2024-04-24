@@ -165,7 +165,9 @@ impl<'r> sqlx::Encode<'r, sqlx::Postgres> for BoxedRawValue {
         out: &mut <sqlx::Postgres as sqlx::database::HasArguments<'r>>::ArgumentBuffer,
     ) -> sqlx::encode::IsNull {
         let j = sqlx::types::Json(&self.0);
-        j.encode_by_ref(out)
+        <sqlx::types::Json<&Box<sqlx::types::JsonRawValue>> as sqlx::Encode<'_, sqlx::Postgres>>::encode_by_ref(
+            &j, out,
+        )
     }
 }
 
