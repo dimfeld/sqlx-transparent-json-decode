@@ -1,3 +1,7 @@
+# 3.0.0
+
+- Support sqlx 0.8.0
+
 # 2.2.1
 
 - Fix derived `array_compatible` implementation
