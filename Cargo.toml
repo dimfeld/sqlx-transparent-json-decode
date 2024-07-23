@@ -12,12 +12,12 @@ repository = "https://github.com/dimfeld/sqlx-transparent-json-decode"
 schemars = { version = "0.8.16", features = ["raw_value"], default-features = false, optional = true }
 serde = { version = "1.0.193", features = ["derive"], optional = true }
 serde_json = { version = "1.0.108", default-features = false, features = ["raw_value"] }
-sqlx = { version = "0.7.0", default-features = false, features = ["postgres"] }
+sqlx = { version = "0.8.0", default-features = false, features = ["postgres"] }
 
 [dev-dependencies]
 serde = { version = "1.0.193", features = ["derive"] }
 serde_json = { version = "1.0.108", features = ["raw_value"] }
-sqlx = { version = "0.7.0", features = ["runtime-tokio", "tls-native-tls", "migrate", "postgres"] }
+sqlx = { version = "0.8.0", features = ["runtime-tokio", "tls-native-tls", "migrate", "postgres"] }
 
 [features]
 default = ["boxed_raw_value_eq"]
