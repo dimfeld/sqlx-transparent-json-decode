@@ -140,7 +140,7 @@ impl From<BoxedRawValue> for Box<serde_json::value::RawValue> {
 
 impl<'r> sqlx::Decode<'r, sqlx::Postgres> for BoxedRawValue {
     fn decode(
-        value: <sqlx::Postgres as sqlx::database::HasValueRef<'r>>::ValueRef,
+        value: <sqlx::Postgres as sqlx::Database>::ValueRef<'r>,
     ) -> Result<Self, sqlx::error::BoxDynError> {
         let buf = decode_json(value)?;
         let string = std::str::from_utf8(buf)?;
@@ -162,8 +162,8 @@ impl PgHasArrayType for BoxedRawValue {
 impl<'r> sqlx::Encode<'r, sqlx::Postgres> for BoxedRawValue {
     fn encode_by_ref(
         &self,
-        out: &mut <sqlx::Postgres as sqlx::database::HasArguments<'r>>::ArgumentBuffer,
-    ) -> sqlx::encode::IsNull {
+        out: &mut <sqlx::Postgres as sqlx::Database>::ArgumentBuffer<'r>,
+    ) -> Result<sqlx::encode::IsNull, Box<dyn std::error::Error + Send + Sync>> {
         let j = sqlx::types::Json(&self.0);
         <sqlx::types::Json<&Box<sqlx::types::JsonRawValue>> as sqlx::Encode<'_, sqlx::Postgres>>::encode_by_ref(
             &j, out,
@@ -184,7 +184,7 @@ impl sqlx::Type<sqlx::Postgres> for BoxedRawValue {
 
 /// Extract a byte slice from a Postgres JSON or JSONB value. You shouldn't need to use this directly.
 pub fn decode_json(
-    value: <sqlx::Postgres as sqlx::database::HasValueRef<'_>>::ValueRef,
+    value: <sqlx::Postgres as sqlx::Database>::ValueRef<'_>,
 ) -> Result<&'_ [u8], sqlx::error::BoxDynError> {
     use sqlx::ValueRef;
     let is_jsonb = value.type_info().as_ref() == &sqlx::postgres::PgTypeInfo::with_oid(JSONB_OID);
